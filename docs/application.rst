@@ -7,9 +7,13 @@ Warehouse uses the
 `Postgres <https://www.postgresql.org/docs/>`__ for its database.
 Warehouse's front end uses `Jinja2 <http://jinja.pocoo.org/>`__ templates.
 
-The production deployment for Warehouse is in progress and currently
-does not use any containers, although we may change that in the
-future. In the development environment, we use several `Docker`_  containers, and use `Docker Compose <https://docs.docker.com/compose/overview/>`__ to `manage <https://github.com/pypa/warehouse/blob/master/docker-compose.yml#L3>`__
+The production deployment for Warehouse is on Amazon Web Services (for
+PyPI.org) and Heroku (for test.pypi.org). It does not use any
+containers, although we may change that in the future. In the
+development environment, we use several `Docker`_ containers, and use
+`Docker Compose <https://docs.docker.com/compose/overview/>`__ to
+`manage
+<https://github.com/pypa/warehouse/blob/master/docker-compose.yml#L3>`__
 running the containers and the connections between them. In the future
 we will probably reduce that number to two containers, one of which
 contains static files for the website, and the other which contains
