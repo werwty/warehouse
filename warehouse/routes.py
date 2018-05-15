@@ -361,3 +361,18 @@ def includeme(config):
         read_only=True,
         domain=warehouse,
     )
+
+    config.add_route(
+        "api.views.journals",
+        "/api/journals",
+        read_only=True,
+        domain=warehouse,
+    )
+
+    config.add_route(
+        "api.views.journals.latest",
+        "/api/journals/latest",
+        read_only=True,
+        domain=warehouse,
+    )
+
