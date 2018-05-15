@@ -344,6 +344,9 @@ def includeme(config):
         domain=warehouse,
     )
 
+    # This is the json api for th XML-RPC list_packages_with_serial()
+    # This route can be filtered with serial_since and serial to provide
+    # the changelog_since_serial(since_serial) XML-RPC call
     config.add_route(
         "api.views.projects",
         "/api/projects/",
@@ -352,6 +355,9 @@ def includeme(config):
         domain=warehouse,
     )
 
+    # This is the JSON API equivalent of the package_releases(package_name,
+    # show_hidden=False) XML-RPC call
+    # TODO more metadata
     config.add_route(
         "api.views.projects.detail",
         "/api/projects/{name}/",
@@ -361,6 +367,41 @@ def includeme(config):
         domain=warehouse,
     )
 
+    # package_roles(package_name)
+    config.add_route(
+        "api.views.projects.detail.roles",
+        "/api/projects/{name}/roles/",
+        factory="warehouse.packaging.models:ProjectFactory",
+        traverse="/{name}",
+        read_only=True,
+        domain=warehouse,
+    )
+
+    # release_data
+    # TODO: serialize this data
+    config.add_route(
+        "api.views.projects.releases.details",
+        "/api/projects/{name}/{version}/",
+        factory="warehouse.packaging.models:ProjectFactory",
+        traverse="/{name}/{version}",
+        read_only=True,
+        domain=warehouse,
+    )
+
+    #
+    # # release_urls(package_name, release_version)
+    # # TODO fix this
+    # config.add_route(
+    #     "api.views.projects.detail.versions.detail.download_urls",
+    #     "/api/projects/{name}/{version}/downloads/",
+    #     factory="warehouse.packaging.models:ProjectFactory",
+    #     traverse="/{name}/{version}",
+    #     read_only=True,
+    #     domain=warehouse,
+    # )
+
+    # This is the JSON API equivalent of the changelog() XML-RPC call
+    # TODO Filter by timestamp since
     config.add_route(
         "api.views.journals",
         "/api/journals",
@@ -368,9 +409,20 @@ def includeme(config):
         domain=warehouse,
     )
 
+    # This is the JSON API equivalent of changelog_last_serial()
     config.add_route(
         "api.views.journals.latest",
         "/api/journals/latest",
+        read_only=True,
+        domain=warehouse,
+    )
+
+    # This is the JSON API equivalent of user_packages(user)
+    config.add_route(
+        "api.views.users.details.projects",
+        "/api/users/{user}/projects/",
+        factory="warehouse.accounts.models:UserFactory",
+        traverse="/{user}",
         read_only=True,
         domain=warehouse,
     )
