@@ -343,3 +343,21 @@ def includeme(config):
         "/rss/packages.xml",
         domain=warehouse,
     )
+
+    config.add_route(
+        "api.views.projects",
+        "/api/projects",
+        factory="warehouse.packaging.models:ProjectFactory",
+        read_only=True,
+        domain=warehouse,
+    )
+
+
+    config.add_route(
+        "api.views.projects.detail",
+        "/api/projects/{name}",
+        factory="warehouse.packaging.models:ProjectFactory",
+        traverse="/{name}",
+        read_only=True,
+        domain=warehouse,
+    )
