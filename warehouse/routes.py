@@ -378,7 +378,6 @@ def includeme(config):
     )
 
     # release_data
-    # TODO: serialize this data
     config.add_route(
         "api.views.projects.releases.details",
         "/api/projects/{name}/{version}/",
@@ -388,23 +387,9 @@ def includeme(config):
         domain=warehouse,
     )
 
-    #
-    # # release_urls(package_name, release_version)
-    # # TODO fix this
-    # config.add_route(
-    #     "api.views.projects.detail.versions.detail.download_urls",
-    #     "/api/projects/{name}/{version}/downloads/",
-    #     factory="warehouse.packaging.models:ProjectFactory",
-    #     traverse="/{name}/{version}",
-    #     read_only=True,
-    #     domain=warehouse,
-    # )
-
-    # This is the JSON API equivalent of the changelog() XML-RPC call
-    # TODO Filter by timestamp since
     config.add_route(
         "api.views.journals",
-        "/api/journals",
+        "/api/journals/",
         read_only=True,
         domain=warehouse,
     )
@@ -412,7 +397,7 @@ def includeme(config):
     # This is the JSON API equivalent of changelog_last_serial()
     config.add_route(
         "api.views.journals.latest",
-        "/api/journals/latest",
+        "/api/journals/latest/",
         read_only=True,
         domain=warehouse,
     )

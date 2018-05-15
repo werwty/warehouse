@@ -124,56 +124,20 @@ def projects_details_versions_details(release, request):
     }
 
 
-#
-# @view_config(
-#     route_name="api.views.projects.detail.versions.detail.download_urls",
-#     renderer="json",
-#     context=Release,
-#
-# )
-# def projects_versions_downloads(version, request):
-#     project = version.project
-#
-#     files = (
-#         request.db.query(File)
-#             .join(Release, Project)
-#             .filter((Project.normalized_name ==
-#                      func.normalize_pep426_name(project.name)) &
-#                     (Release.version == version))
-#             .all()
-#     )
-#
-#     return [
-#         {
-#             "filename": f.filename,
-#             "packagetype": f.packagetype,
-#             "python_version": f.python_version,
-#             "size": f.size,
-#             "md5_digest": f.md5_digest,
-#             "sha256_digest": f.sha256_digest,
-#             "digests": {
-#                 "md5": f.md5_digest,
-#                 "sha256": f.sha256_digest,
-#             },
-#             "has_sig": f.has_signature,
-#             "upload_time": f.upload_time.isoformat() + "Z",
-#             "comment_text": f.comment_text,
-#             # TODO: Remove this once we've had a long enough time with it
-#             #       here to consider it no longer in use.
-#             "downloads": -1,
-#             "path": f.path,
-#             "url": request.route_url("packaging.file", path=f.path),
-#         }
-#         for f in files
-#     ]
-
 @view_config(
     route_name="api.views.journals",
     renderer="json",
 )
 def journals(request):
-    journals = request.db.query(JournalEntry).order_by(desc(JournalEntry.submitted_date)) \
-        .limit(1000).all()
+    since = request.params.get("since")
+    journals = request.db.query(JournalEntry)
+
+    if since:
+        journals = journals.filter(
+            JournalEntry.submitted_date >
+            datetime.datetime.utcfromtimestamp(int(since)))
+
+    journals = journals.order_by(JournalEntry.id).limit(5000)
 
     return [
         {"name": journal.name,
