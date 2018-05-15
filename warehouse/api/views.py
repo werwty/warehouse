@@ -17,7 +17,8 @@ def _render_project(request, project):
     renderer="json",
 )
 def projects(request):
-    projects = request.db.query(Project).order_by(Project.normalized_name).all()
+    serial_since = request.params.get("serial_since") or 0
+    projects = request.db.query(Project).filter(Project.last_serial >= serial_since).order_by(Project.normalized_name).all()
     return [_render_project(request, project) for project in projects]
 
 

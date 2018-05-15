@@ -346,7 +346,7 @@ def includeme(config):
 
     config.add_route(
         "api.views.projects",
-        "/api/projects",
+        "/api/projects/",
         factory="warehouse.packaging.models:ProjectFactory",
         read_only=True,
         domain=warehouse,
@@ -355,7 +355,7 @@ def includeme(config):
 
     config.add_route(
         "api.views.projects.detail",
-        "/api/projects/{name}",
+        "/api/projects/{name}/",
         factory="warehouse.packaging.models:ProjectFactory",
         traverse="/{name}",
         read_only=True,
