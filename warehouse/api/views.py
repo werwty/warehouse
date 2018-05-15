@@ -1,17 +1,19 @@
 import datetime
 from pyramid.view import view_config
-from sqlalchemy import func, desc, select
-from warehouse.packaging.models import File, Release, Project, JournalEntry
+from sqlalchemy import func, desc
+from warehouse.packaging.models import Project, JournalEntry
+
 
 def _render_project(request, project):
     return {
-    "name": project.normalized_name,
-    "serial": project.last_serial,
-    "project_url": request.route_url(
-        "api.views.projects.detail",
-        name=project.name,
+        "name": project.normalized_name,
+        "serial": project.last_serial,
+        "project_url": request.route_url(
+            "api.views.projects.detail",
+            name=project.name,
         )
     }
+
 
 @view_config(
     route_name="api.views.projects",
@@ -44,16 +46,16 @@ def projects_detail(project, request):
     renderer="json",
 )
 def journals(request):
-    journals = request.db.query(JournalEntry).order_by(desc(JournalEntry.submitted_date)).\
-        limit(1000).all()
+    journals = request.db.query(JournalEntry).order_by(desc(JournalEntry.submitted_date)) \
+        .limit(1000).all()
 
-    return [{
-        "name": journal.name,
-        "version":journal.version,
-        "timestamp": journal.submitted_date\
-                 .replace(tzinfo=datetime.timezone.utc)\
-                 .timestamp(),
-        "action": journal.action} for journal in journals]
+    return [
+        {"name": journal.name,
+         "version": journal.version,
+         "timestamp": journal.submitted_date
+            .replace(tzinfo=datetime.timezone.utc).timestamp(),
+         "action": journal.action}
+        for journal in journals]
 
 
 @view_config(
@@ -63,11 +65,10 @@ def journals(request):
 def journals_latest(request):
     last_serial = request.db.query(func.max(JournalEntry.id)).scalar()
     response = {
-        "last_serial":  last_serial,
-        "project_url":  request.route_url(
+        "last_serial": last_serial,
+        "project_url": request.route_url(
             "api.views.projects",
-            _query = {'serial': last_serial}
+            _query={'serial': last_serial}
         )
     }
     return response
-
