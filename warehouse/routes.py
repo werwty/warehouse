@@ -352,7 +352,6 @@ def includeme(config):
         domain=warehouse,
     )
 
-
     config.add_route(
         "api.views.projects.detail",
         "/api/projects/{name}/",
@@ -375,4 +374,3 @@ def includeme(config):
         read_only=True,
         domain=warehouse,
     )
-
