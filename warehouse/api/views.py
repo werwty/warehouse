@@ -2,8 +2,7 @@ import datetime
 from pyramid.view import view_config
 from sqlalchemy import func, desc, orm
 from warehouse.packaging.models import (Project, JournalEntry,
-                                        Role, User, Release)
-
+                                        Role, User, Release, File)
 
 def _render_project(request, project):
     return {
@@ -30,16 +29,124 @@ def projects(request):
     if serial:
         projects = projects.filter(Project.last_serial == serial)
 
-    projects = projects.order_by(Project.id).all()
+    projects = projects.order_by(Project.created).all()
     return [_render_project(request, project) for project in projects]
 
 
 @view_config(
     route_name="api.views.projects.detail",
     renderer="json",
+    context=Project,
 )
 def projects_detail(project, request):
-    return _render_project(request, project)
+    release = (
+        request.db.query(Release)
+            .filter(Release.project == project)
+            .order_by(
+            Release.is_prerelease.nullslast(),
+            Release._pypi_ordering.desc())
+            .limit(1)
+            .one()
+    )
+    return json_release(release, request)
+
+
+def json_release(release, request):
+    project = release.project
+
+    # Get the latest serial number for this project.
+    request.response.headers["X-PyPI-Last-Serial"] = str(project.last_serial)
+
+    # Get all of the releases and files for this project.
+    release_files = (
+        request.db.query(Release, File)
+               .options(orm.Load(Release).load_only('version'))
+               .outerjoin(File)
+               .filter(Release.project == project)
+               .order_by(Release._pypi_ordering.desc(), File.filename)
+               .all()
+    )
+
+    # Map our releases + files into a dictionary that maps each release to a
+    # list of all its files.
+    releases = {}
+    for r, file_ in release_files:
+        files = releases.setdefault(r, [])
+        if file_ is not None:
+            files.append(file_)
+
+    # Serialize our database objects to match the way that PyPI legacy
+    # presented this data.
+    releases = {
+        r.version: [
+            {
+                "filename": f.filename,
+                "packagetype": f.packagetype,
+                "python_version": f.python_version,
+                "has_sig": f.has_signature,
+                "comment_text": f.comment_text,
+                "md5_digest": f.md5_digest,
+                "digests": {
+                    "md5": f.md5_digest,
+                    "sha256": f.sha256_digest,
+                },
+                "size": f.size,
+                # TODO: Remove this once we've had a long enough time with it
+                #       here to consider it no longer in use.
+                "downloads": -1,
+                "upload_time": f.upload_time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "url": request.route_url("packaging.file", path=f.path),
+            }
+            for f in fs
+        ]
+        for r, fs in releases.items()
+    }
+
+    return {
+        "info": {
+            "name": project.name,
+            "version": release.version,
+            "summary": release.summary,
+            "description_content_type": release.description_content_type,
+            "description": release.description,
+            "keywords": release.keywords,
+            "license": release.license,
+            "classifiers": list(release.classifiers),
+            "author": release.author,
+            "author_email": release.author_email,
+            "maintainer": release.maintainer,
+            "maintainer_email": release.maintainer_email,
+            "requires_python": release.requires_python,
+            "platform": release.platform,
+            "downloads": {
+                "last_day": -1,
+                "last_week": -1,
+                "last_month": -1,
+            },
+            "package_url": request.route_url(
+                "packaging.project",
+                name=project.name,
+            ),
+            "project_url": request.route_url(
+                "packaging.project",
+                name=project.name,
+            ),
+            "release_url": request.route_url(
+                "packaging.release",
+                name=project.name,
+                version=release.version,
+            ),
+            "requires_dist": (list(release.requires_dist)
+                              if release.requires_dist else None),
+            "docs_url": project.documentation_url,
+            "bugtrack_url": project.bugtrack_url,
+            "home_page": release.home_page,
+            "download_url": release.download_url,
+        },
+        "urls": releases[release.version],
+        "releases": releases,
+        "last_serial": project.last_serial,
+    }
 
 
 @view_config(
