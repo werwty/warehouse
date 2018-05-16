@@ -21,6 +21,7 @@ itsdangerous
 Jinja2>=2.8
 limits
 lxml
+marshmallow
 mistune
 msgpack
 packaging>=15.2

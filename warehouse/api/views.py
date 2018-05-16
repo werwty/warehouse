@@ -1,18 +1,28 @@
+import json
 import datetime
+from marshmallow import Schema, fields
+from paginate_sqlalchemy import SqlalchemyOrmPage as SQLAlchemyORMPage
 from pyramid.view import view_config
 from sqlalchemy import func, desc, orm
 from warehouse.packaging.models import (Project, JournalEntry,
                                         Role, User, Release, File)
+from sqlalchemy import func, desc
+from warehouse.packaging.models import Project, JournalEntry
+from warehouse.utils.paginate import paginate_url_factory
 
-def _render_project(request, project):
-    return {
-        "name": project.normalized_name,
-        "serial": project.last_serial,
-        "project_url": request.route_url(
-            "api.views.projects.detail",
-            name=project.name,
-        )
-    }
+from .utils import pagination_serializer
+
+# TODO move this to config
+ITEMS_PER_PAGE = 100
+
+
+class ProjectSchema(Schema):
+    normalized_name = fields.Str()
+    url = fields.Method("get_detail_url")
+
+    def get_detail_url(self, obj):
+        request = self.context.get('request')
+        return request.route_url("api.views.projects.detail", name=obj.normalized_name)
 
 
 @view_config(
@@ -22,15 +32,23 @@ def _render_project(request, project):
 def projects(request):
     serial_since = request.params.get("serial_since")
     serial = request.params.get("serial")
-    projects = request.db.query(Project)
+    page_num = int(request.params.get("page", 1))
+    projects_query = request.db.query(Project).order_by(Project.created)
 
     if serial_since:
-        projects = projects.filter(Project.last_serial >= serial_since)
+        projects_query = projects_query.filter(Project.last_serial >= serial_since)
     if serial:
-        projects = projects.filter(Project.last_serial == serial)
+        projects_query = projects_query.filter(Project.last_serial == serial)
 
-    projects = projects.order_by(Project.created).all()
-    return [_render_project(request, project) for project in projects]
+    projects_page = SQLAlchemyORMPage(
+        projects_query,
+        page=page_num,
+        items_per_page=ITEMS_PER_PAGE,
+        url_maker=paginate_url_factory(request),
+    )
+    project_schema = ProjectSchema(many=True)
+    project_schema.context = {'request': request}
+    return pagination_serializer(project_schema, projects_page, "api.views.projects", request)
 
 
 @view_config(
