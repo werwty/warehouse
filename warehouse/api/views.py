@@ -19,6 +19,7 @@ ITEMS_PER_PAGE = 100
 class ProjectSchema(Schema):
     normalized_name = fields.Str()
     url = fields.Method("get_detail_url")
+    last_serial = fields.Int()
 
     def get_detail_url(self, obj):
         request = self.context.get('request')
