@@ -16,6 +16,8 @@ def includeme(config):
     # these to segregate the Warehouse routes from the Forklift routes until
     # Forklift is properly split out into it's own project.
     warehouse = config.get_settings().get("warehouse.domain")
+    # Add a subdomain for the sandbox api.
+    sandbox = config.get_settings().get("sandbox.domain")
     files_url = config.get_settings()["files.url"]
 
     # Simple Route for health checks.
@@ -352,7 +354,7 @@ def includeme(config):
         "/api/projects/",
         factory="warehouse.packaging.models:ProjectFactory",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
 
     # This is the JSON API equivalent of the package_releases(package_name,
@@ -364,7 +366,7 @@ def includeme(config):
         factory="warehouse.packaging.models:ProjectFactory",
         traverse="/{name}",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
 
     # package_roles(package_name)
@@ -374,7 +376,7 @@ def includeme(config):
         factory="warehouse.packaging.models:ProjectFactory",
         traverse="/{name}",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
 
     # release_data
@@ -384,14 +386,14 @@ def includeme(config):
         factory="warehouse.packaging.models:ProjectFactory",
         traverse="/{name}/{version}",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
 
     config.add_route(
         "api.views.journals",
         "/api/journals/",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
 
     # This is the JSON API equivalent of changelog_last_serial()
@@ -399,7 +401,7 @@ def includeme(config):
         "api.views.journals.latest",
         "/api/journals/latest/",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
 
     # This is the JSON API equivalent of user_packages(user)
@@ -409,5 +411,5 @@ def includeme(config):
         factory="warehouse.accounts.models:UserFactory",
         traverse="/{user}",
         read_only=True,
-        domain=warehouse,
+        domain=sandbox,
     )
